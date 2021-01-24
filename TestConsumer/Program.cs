@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -31,6 +32,64 @@ namespace Confluent.Kafka.Examples.ConsumerExample
 {
     public class Program
     {
+        public static void MyErrorHandler<T,U>(IConsumer<T, U> consumer, Error error)
+        {
+            Console.WriteLine($"Error: {consumer.Name} {error.Reason}");
+        }
+
+        public static void MyLogHandler<T, U>(IConsumer<T, U> consumer, LogMessage logMessage)
+        {
+            Console.WriteLine($"Log: {consumer.Name} {logMessage.Message}");
+        }
+
+        public static void ReadDatas(string brokerList, string topic, int partition, int offsetMin, int offsetMax)
+        {
+            try
+            {
+                Console.WriteLine("Start read datas");
+                var config = new ConsumerConfig
+                {
+                    BootstrapServers = brokerList,
+                    GroupId = "csharp-consumer",
+                    EnableAutoCommit = false,
+                    SessionTimeoutMs = 6000,
+                   // AutoOffsetReset = AutoOffsetReset.Earliest,                    
+                    EnablePartitionEof = true
+                };
+                var consumerBuilder = new ConsumerBuilder<string, string>(config);
+                consumerBuilder.SetErrorHandler(MyErrorHandler);
+                consumerBuilder.SetLogHandler(MyLogHandler);
+
+                var consumer = consumerBuilder.Build();
+
+                // Read datas from
+                consumer.Assign(new TopicPartitionOffset(topic, new Partition(partition), new Offset(offsetMin)));
+                ConsumeResult<string, string> result;
+                var sw = new Stopwatch();
+                do
+                {
+                    sw.Restart();
+                    result = consumer.Consume(10_000);
+                    Console.WriteLine(sw.ElapsedMilliseconds);
+                    if (result != null)
+                    {
+                        Console.WriteLine($"{result.IsPartitionEOF} {result.TopicPartitionOffset}: '{result.Message?.Key}' | '{result.Message?.Value}'");              
+                    }
+                }
+                while (result != null && !result.IsPartitionEOF && result.Offset < offsetMax);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+
+
+
+
+
+
         /// <summary>
         ///     In this example
         ///         - offsets are manually committed.
@@ -74,6 +133,12 @@ namespace Confluent.Kafka.Examples.ConsumerExample
                 })
                 .Build())
             {
+                // Read datas from
+                //consumer.Seek(new TopicPartitionOffset("toto", new Partition(10), new Offset(123)));
+                //var result = consumer.Consume(100);
+                //Console.WriteLine(result.TopicPartitionOffset);
+                
+
                 consumer.Subscribe(topics);
 
                 try
@@ -220,6 +285,9 @@ namespace Confluent.Kafka.Examples.ConsumerExample
                 e.Cancel = true; // prevent the process from terminating.
                 cts.Cancel();
             };
+
+            ReadDatas(brokerList, topics[0], 2, 5, 100);
+            return;
 
             switch (mode)
             {
