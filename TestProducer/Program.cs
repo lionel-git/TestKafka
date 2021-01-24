@@ -28,12 +28,13 @@ namespace Confluent.Kafka.Examples.ProducerExample
 {
     public class Program
     {
+        // Topic TestPartition => 3 partitions
         public static async Task Main(string[] args)
         {
             if (args.Length != 2)
             {
                 Console.WriteLine("Usage: .. brokerList topicName");
-                Console.WriteLine("Ex:  Ubuntu-x64:9092 Toto");
+                Console.WriteLine("Ex:  Ubuntu-x64:9092 Toto / TestPartition");
                 return;
             }
 

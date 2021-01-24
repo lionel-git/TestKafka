@@ -22,7 +22,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using TestConsumer;
 
 /// <summary>
 ///     Demonstrates use of the Consumer client.
@@ -43,7 +43,7 @@ namespace Confluent.Kafka.Examples.ConsumerExample
                 BootstrapServers = brokerList,
                 GroupId = "csharp-consumer",
                 EnableAutoCommit = false,
-                StatisticsIntervalMs = 5000,
+                StatisticsIntervalMs = 0, // Emit statistics message every 5s
                 SessionTimeoutMs = 6000,
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnablePartitionEof = true
@@ -180,10 +180,29 @@ namespace Confluent.Kafka.Examples.ConsumerExample
         }
 
         private static void PrintUsage()
-            => Console.WriteLine("Usage: .. <subscribe|manual> <broker,broker,..> <topic> [topic..]");
+        {
+            Console.WriteLine("Usage: .. <subscribe|manual> <broker,broker,..> <topic> [topic..]");
+            Console.WriteLine("Ex:  Ubuntu-x64:9092 Toto / TestPartition");
+        }
+
+        public static void DoSomeTests()
+        {
+            Console.WriteLine("Start some tests...");
+            try
+            {
+                SomeTests.Test1();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+            Console.WriteLine("End some tests...");
+        }
 
         public static void Main(string[] args)
         {
+             //DoSomeTests(); return; 
+            
             if (args.Length < 3)
             {
                 PrintUsage();
